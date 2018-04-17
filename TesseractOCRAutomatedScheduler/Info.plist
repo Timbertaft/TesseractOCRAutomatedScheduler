@@ -35,6 +35,8 @@
 	<true/>
 	<key>NSCalendarsUsageDescription</key>
 	<string></string>
+	<key>NSCameraUsageDescription</key>
+	<string></string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need to access your photo library to upload an image</string>
 	<key>UILaunchStoryboardName</key>

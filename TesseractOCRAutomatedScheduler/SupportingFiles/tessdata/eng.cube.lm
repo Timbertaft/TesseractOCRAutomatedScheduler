@@ -1,7 +1,5 @@
-LeadPunc="({[`'
-TrailPunc=}:;-]!?`,.)"'
-NumLeadPunc=#({[@$
-NumTrailPunc=}):;].,%
-Operators=*+-/.:,()[]
+TrailPunc= :
+NumTrailPunc= :
+Operators=:
 Digits=0123456789
 Alphas=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
