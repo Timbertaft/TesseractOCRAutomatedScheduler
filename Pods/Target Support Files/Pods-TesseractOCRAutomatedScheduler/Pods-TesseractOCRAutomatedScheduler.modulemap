@@ -1,0 +1,6 @@
+framework module Pods_TesseractOCRAutomatedScheduler {
+  umbrella header "Pods-TesseractOCRAutomatedScheduler-umbrella.h"
+
+  export *
+  module * { export * }
+}
