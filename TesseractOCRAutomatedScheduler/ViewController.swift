@@ -10,6 +10,7 @@ import UIKit
 import TesseractOCR
 import GoogleSignIn
 import GoogleAPIClientForREST
+import CoreFoundation
 
 
 
@@ -22,7 +23,11 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     
     private let service = GTLRCalendarService()
     let signInButton = GIDSignInButton()
-    var tesstext = ""
+    var tesstext = [String]()
+    
+    var manualloop = 0
+    var monthnumber = 0
+    let month = [1 : "January", 2 : "February", 3: "March", 4: "April", 5: "May", 6: "June", 7: "July", 8: "August", 9: "September", 10: "October", 11: "November", 12: "December"]
     
     let output = UITextView()
     
@@ -68,11 +73,75 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             presentImagePicker()
             
             //fetchEvents()
+            //GTLRCalendarQuery_EventsInsert
         }
         
         
     }
     
+    
+    
+    func matches(for regex: String, in text: String) -> [String] {
+        
+        do {
+            let regex = try NSRegularExpression(pattern: regex)
+            let results = regex.matches(in: text,
+                                        range: NSRange(text.startIndex..., in: text))
+            return results.map {
+                String(text[Range($0.range, in: text)!])
+            }
+        } catch let error {
+            print("invalid regex: \(error.localizedDescription)")
+            return []
+        }
+    }
+    
+    func GenerateEvent()
+    {
+        // TODO: Temporary: remember to move these variable setters out of the function.  Otherwise manual loop will reset to 0 everytime.
+       
+        var time = matches(for: "\\d{1,2}:\\d\\d \\w{1,2} - \\d{1,2}:\\d\\d\\s\\w{0,2}", in: tesstext[manualloop])
+        var fulltime = time[0].components(separatedBy: " - ")
+        //TODO: start and end times present, but need to be trimmed of extras and have condition inserted to increase value by 12 if pm or am.
+        var starttime = fulltime[0]
+        var endtime = fulltime[1]
+        //Below account for common character matching issues
+        
+        //TODO: Create character error catching
+        
+        //Below expression matches array value for day and generates variable in 2 digit numerical format.
+        var daymatch = matches(for: "\\s\\d{1,2}\\s", in: tesstext[manualloop])
+        daymatch[0] = daymatch[0].trimmingCharacters(in: .whitespacesAndNewlines)
+        var finaldayvalue = String(format: "%02d", daymatch[0])
+        // Above expression for day values.
+        
+        //Below expression for month values
+        for(monthdigit, monthname) in month {
+            
+            if(tesstext[manualloop] == monthname)
+            {
+                monthnumber = monthdigit
+            }
+        }
+        //Above expression for month values.
+        let RFC3339DateFormatter = DateFormatter()
+        let RFC3339DateFormatternotime = DateFormatter()
+        RFC3339DateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        RFC3339DateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm"
+        RFC3339DateFormatternotime.dateFormat = "yyyy-MM-dd"
+        // Above formats values into parsable dates.
+        //Below variables for time and dates parsable by calendar.
+        var date = "2018-" + String(monthnumber) + "-" + String(finaldayvalue)
+        var datetimestart = (date + "T" + starttime)
+        var dattimeend = (date + "T" + endtime)
+        var datefinalstart = RFC3339DateFormatter.date(from: datetimestart)
+        var datefinal = RFC3339DateFormatternotime.date(from: date)
+        var datefinalend = RFC3339DateFormatter.date(from: dattimeend)
+        var googledatestart = GTLRDateTime(date: datefinalstart!)
+        var googledatenotime = GTLRDateTime(date: datefinal!)
+        var googledateend = GTLRDateTime(date: datefinalend!)
+        
+    }
     
     
     // Construct a query and get a list of upcoming events from the user calendar
@@ -148,7 +217,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
                 
             tesseract.rect = CGRect(x: x[index], y: y[index], width: width[index], height: height[index])
             tesseract.recognize()
-            tesstext += tesseract.recognizedText
+            tesstext[index] = tesseract.recognizedText
             }
             
 
@@ -220,6 +289,12 @@ extension UIImage {
     func scaleImage() -> UIImage? {
         
         var scaledSize = CGSize(width: 4048, height: 3036)
+        
+        if(size.height > size.width)
+        {
+            //TODO: Create alert to catch images not in landscape mode.
+           
+        }
         
         UIGraphicsBeginImageContext(scaledSize)
         draw(in: CGRect(origin: .zero, size: scaledSize))
