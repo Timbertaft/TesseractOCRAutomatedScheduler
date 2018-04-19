@@ -25,9 +25,13 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     let signInButton = GIDSignInButton()
     var tesstext = [String]()
     
+    //Values for reference and mutation in creating events Below.
     var manualloop = 0
     var monthnumber = 0
     let month = [1 : "January", 2 : "February", 3: "March", 4: "April", 5: "May", 6: "June", 7: "July", 8: "August", 9: "September", 10: "October", 11: "November", 12: "December"]
+    var describer = ""
+    //Values for reference and mutation in creating events Above.
+    
     
     let output = UITextView()
     
@@ -45,7 +49,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         // Add the sign-in button.
         view.addSubview(signInButton)
         
-        // Add a UITextView to display output.
+        // Add a UITextView to display output. TODO: THIS IS A PLACEHOLDER
         output.frame = view.bounds
         output.isEditable = false
         output.contentInset = UIEdgeInsets(top: 20, left: 0, bottom: 20, right: 0)
@@ -101,18 +105,31 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         // TODO: Temporary: remember to move these variable setters out of the function.  Otherwise manual loop will reset to 0 everytime.
        
         var time = matches(for: "\\d{1,2}:\\d\\d \\w{1,2} - \\d{1,2}:\\d\\d\\s\\w{0,2}", in: tesstext[manualloop])
-        var fulltime = time[0].components(separatedBy: " - ")
+        var daymatch = matches(for: "\\s\\d{1,2}\\s", in: tesstext[manualloop])
+        var fulltime = [String]()
+        var starttime = ""
+        var endtime = ""
+        var finaldayvalue = ""
+        var nameofmonth = ""
+        
+        if(time[0] != "")
+        {
+        fulltime = time[0].components(separatedBy: " - ")
         //TODO: start and end times present, but need to be trimmed of extras and have condition inserted to increase value by 12 if pm or am.
-        var starttime = fulltime[0]
-        var endtime = fulltime[1]
+        starttime = fulltime[0]
+        endtime = fulltime[1]
+            describer = time[0]
+        }
         //Below account for common character matching issues
         
         //TODO: Create character error catching
         
         //Below expression matches array value for day and generates variable in 2 digit numerical format.
-        var daymatch = matches(for: "\\s\\d{1,2}\\s", in: tesstext[manualloop])
+        
+        if(daymatch[0] != "") {
         daymatch[0] = daymatch[0].trimmingCharacters(in: .whitespacesAndNewlines)
-        var finaldayvalue = String(format: "%02d", daymatch[0])
+        finaldayvalue = String(format: "%02d", daymatch[0])
+        }
         // Above expression for day values.
         
         //Below expression for month values
@@ -121,26 +138,87 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             if(tesstext[manualloop] == monthname)
             {
                 monthnumber = monthdigit
+                nameofmonth = monthname
             }
         }
-        //Above expression for month values.
-        let RFC3339DateFormatter = DateFormatter()
-        let RFC3339DateFormatternotime = DateFormatter()
-        RFC3339DateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        RFC3339DateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm"
-        RFC3339DateFormatternotime.dateFormat = "yyyy-MM-dd"
-        // Above formats values into parsable dates.
-        //Below variables for time and dates parsable by calendar.
-        var date = "2018-" + String(monthnumber) + "-" + String(finaldayvalue)
-        var datetimestart = (date + "T" + starttime)
-        var dattimeend = (date + "T" + endtime)
-        var datefinalstart = RFC3339DateFormatter.date(from: datetimestart)
-        var datefinal = RFC3339DateFormatternotime.date(from: date)
-        var datefinalend = RFC3339DateFormatter.date(from: dattimeend)
-        var googledatestart = GTLRDateTime(date: datefinalstart!)
-        var googledatenotime = GTLRDateTime(date: datefinal!)
-        var googledateend = GTLRDateTime(date: datefinalend!)
+
+        if(monthnumber != 0 && String(finaldayvalue) != "" && describer != "") {
+            //Above expression for month values.
+            let RFC3339DateFormatter = DateFormatter()
+            let RFC3339DateFormatternotime = DateFormatter()
+            RFC3339DateFormatter.locale = Locale(identifier: "en_US_POSIX")
+            RFC3339DateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm"
+            RFC3339DateFormatternotime.dateFormat = "yyyy-MM-dd"
+            // Above formats values into parsable dates.
+            //Below variables for time and dates parsable by calendar.
+            var date = "2018-" + String(monthnumber) + "-" + String(finaldayvalue)
+            var datetimestart = (date + "T" + starttime)
+            var dattimeend = (date + "T" + endtime)
+            var datefinalstart = RFC3339DateFormatter.date(from: datetimestart)
+            var datefinal = RFC3339DateFormatternotime.date(from: date)
+            var datefinalend = RFC3339DateFormatter.date(from: dattimeend)
+            //TODO: Learn what offset minutes represents
+            var googledatestart = GTLRDateTime(date: datefinalstart!, offsetMinutes: 5)
+            var googledatenotime = GTLRDateTime(date: datefinal!)
+            var googledateend = GTLRDateTime(date: datefinalend!, offsetMinutes: 50)
+            //var offsetMinutes = [TimeZone .localizedName(EST)]
+            var newevent = GTLRCalendar_Event()
+            newevent.summary = describer
+            newevent.descriptionProperty = describer
+            var reminder = GTLRCalendar_EventReminder()
+            reminder.minutes = 60
+            reminder.method = "SMS"
+            newevent.reminders = GTLRCalendar_Event_Reminders()
+            newevent.reminders?.overrides = [reminder]
+            newevent.reminders?.useDefault = false
+            //Compounds above information into a new event below.
+            
+            //Below checks if there are time values, otherwise all day event.
+            if(datefinalstart != nil && datefinalend != nil) {
+            
+            newevent.start = GTLRCalendar_EventDateTime()
+            newevent.start?.dateTime = googledatestart
+            newevent.end = GTLRCalendar_EventDateTime()
+            newevent.end?.dateTime = googledateend
+            addEvent(newevent)
+            }
+            else {
+                newevent.start = GTLRCalendar_EventDateTime()
+                newevent.start?.dateTime = googledatenotime
+                addEvent(newevent)
+                
+            }
+            
+            //TODO: Create logic for identifying description.
+            
+        }
         
+        if((monthnumber == 0 || String(finaldayvalue) == "" || describer == "") && tesstext[manualloop] != "" && (tesstext[manualloop] != nameofmonth || tesstext[manualloop] != describer || tesstext[manualloop] != String(finaldayvalue))) {
+            //TODO: create user alert with text entry modifiers.
+        }
+        else
+        {
+            manualloop += 1
+            GenerateEvent()
+        }
+        
+    }
+    //Below executes query to API to attempt event insertion.
+    func addEvent(_ event: GTLRCalendar_Event) {
+        let service = GTLRCalendarService()
+        let selectedCalendar = GTLRCalendar_CalendarListEntry()
+        let calendarID = selectedCalendar.identifier
+        let query = GTLRCalendarQuery_EventsInsert.query(withObject: event, calendarId: "primary")
+        query.fields = "id"
+        self.service.executeQuery(
+            query,
+            completionHandler: {(_ callbackTicket:GTLRServiceTicket,
+                _  event:GTLRCalendar_Event,
+                _ callbackError: Error?) -> Void in}
+                as? GTLRServiceCompletionHandler
+        )
+        manualloop += 1
+        GenerateEvent()
     }
     
     
