@@ -30,7 +30,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     var monthnumber = 0
     let month = [1 : "January", 2 : "February", 3: "March", 4: "April", 5: "May", 6: "June", 7: "July", 8: "August", 9: "September", 10: "October", 11: "November", 12: "December"]
     var describer = ""
-    //Values for reference and mutation in creating events Above.
+    //Values for reference and var daymemory = daymatch in creating events Above.
     
     
     let output = UITextView()
@@ -105,6 +105,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         // TODO: Temporary: remember to move these variable setters out of the function.  Otherwise manual loop will reset to 0 everytime.
        
         var time = matches(for: "\\d{1,2}:\\d\\d \\w{1,2} - \\d{1,2}:\\d\\d\\s\\w{0,2}", in: tesstext[manualloop])
+        
         var daymatch = matches(for: "\\s\\d{1,2}\\s", in: tesstext[manualloop])
         var fulltime = [String]()
         var starttime = ""
@@ -129,6 +130,12 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         if(daymatch[0] != "") {
         daymatch[0] = daymatch[0].trimmingCharacters(in: .whitespacesAndNewlines)
         finaldayvalue = String(format: "%02d", daymatch[0])
+        }
+        else if(daymatch[0] == "" && time[0] != "" ) {
+            var daymemory = matches(for: "\\s\\d{1,2}\\s", in: tesstext[manualloop - 1])
+            daymatch[0] = String(Int(daymemory[0])! + 1)
+            daymatch[0].trimmingCharacters(in: .whitespacesAndNewlines)
+            finaldayvalue = String(format: "%02d", daymatch[0])
         }
         // Above expression for day values.
         
@@ -180,7 +187,14 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             newevent.start?.dateTime = googledatestart
             newevent.end = GTLRCalendar_EventDateTime()
             newevent.end?.dateTime = googledateend
+                datefinalstart = nil
+                datefinalend = nil
+                monthnumber = 0
+                finaldayvalue = ""
+                describer = ""
             addEvent(newevent)
+                
+                
             }
             else {
                 newevent.start = GTLRCalendar_EventDateTime()
@@ -196,10 +210,13 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         if((monthnumber == 0 || String(finaldayvalue) == "" || describer == "") && tesstext[manualloop] != "" && (tesstext[manualloop] != nameofmonth || tesstext[manualloop] != describer || tesstext[manualloop] != String(finaldayvalue))) {
             //TODO: create user alert with text entry modifiers.
         }
-        else
+        else if(manualloop < 31)
         {
             manualloop += 1
             GenerateEvent()
+        }
+        else {
+            //TODO: Insert Alert notifying user that the process has completed.
         }
         
     }
