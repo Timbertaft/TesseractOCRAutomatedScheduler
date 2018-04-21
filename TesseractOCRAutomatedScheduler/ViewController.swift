@@ -29,10 +29,15 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     var manualloop = 0
     var monthnumber = 0
     let month = [1 : "January", 2 : "February", 3: "March", 4: "April", 5: "May", 6: "June", 7: "July", 8: "August", 9: "September", 10: "October", 11: "November", 12: "December"]
+    var nameofmonth = ""
     var describer = ""
     var finaldayvalue = ""
     var starttime = ""
     var endtime = ""
+    var iterationvalue = 0
+    var time = [String]()
+    var timecontained = 0
+    
     //Values for reference and var daymemory = daymatch in creating events Above.
     
     
@@ -106,14 +111,11 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     func GenerateEvent()
     {
         // TODO: Temporary: remember to move these variable setters out of the function.  Otherwise manual loop will reset to 0 everytime.
-       
-        var time = matches(for: "\\d{1,2}:\\d\\d \\w{1,2} - \\d{1,2}:\\d\\d\\s\\w{0,2}", in: tesstext[manualloop])
-        
+        if(timecontained != 1){
+        time = matches(for: "\\d{1,2}:\\d\\d \\w{1,2} - \\d{1,2}:\\d\\d\\s\\w{0,2}", in: tesstext[manualloop])
+        }
         var daymatch = matches(for: "\\s\\d{1,2}\\s", in: tesstext[manualloop])
         var fulltime = [String]()
-        
-        
-        var nameofmonth = ""
         
         if(time[0] != "")
         {
@@ -155,30 +157,27 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         if((monthnumber == 0 || String(finaldayvalue) == "" || describer == "") && tesstext[manualloop] != "" && (tesstext[manualloop] != nameofmonth && tesstext[manualloop] != describer && tesstext[manualloop] != String(finaldayvalue))) {
             AlertGenerator()
         }
-            
-            
-        else if(manualloop < 31)
-        {
-            manualloop += 1
-            GenerateEvent()
-        }
-        else {
-            //TODO: Insert Alert notifying user that the process has completed.
-        }
-        
+        else if(monthnumber != 0 && String(finaldayvalue) != "" && describer != "") {
+            CreateEvents()
+            }
     }
     
     func NextIterate() {
+        if(iterationvalue == 1) {
+        manualloop += 1
         starttime = ""
         endtime = ""
         finaldayvalue = ""
         describer = ""
-    }
+        iterationvalue = 0
+        }
+        else if(monthnumber != 0 && String(finaldayvalue) != "" && describer != "") {
+            CreateEvents()
+            }
+        }
     
 
         func CreateEvents() {
-        if(monthnumber != 0 && String(finaldayvalue) != "" && describer != "") {
-            //Above expression for month values.
             let RFC3339DateFormatter = DateFormatter()
             let RFC3339DateFormatternotime = DateFormatter()
             RFC3339DateFormatter.locale = Locale(identifier: "en_US_POSIX")
@@ -186,21 +185,21 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             RFC3339DateFormatternotime.dateFormat = "yyyy-MM-dd"
             // Above formats values into parsable dates.
             //Below variables for time and dates parsable by calendar.
-            var date = "2018-" + String(monthnumber) + "-" + String(finaldayvalue)
-            var datetimestart = (date + "T" + starttime)
-            var dattimeend = (date + "T" + endtime)
-            var datefinalstart = RFC3339DateFormatter.date(from: datetimestart)
-            var datefinal = RFC3339DateFormatternotime.date(from: date)
-            var datefinalend = RFC3339DateFormatter.date(from: dattimeend)
+            let date = "2018-" + String(monthnumber) + "-" + String(finaldayvalue)
+            let datetimestart = (date + "T" + starttime)
+            let dattimeend = (date + "T" + endtime)
+            let datefinalstart = RFC3339DateFormatter.date(from: datetimestart)
+            let datefinal = RFC3339DateFormatternotime.date(from: date)
+            let datefinalend = RFC3339DateFormatter.date(from: dattimeend)
             //TODO: Learn what offset minutes represents
-            var googledatestart = GTLRDateTime(date: datefinalstart!, offsetMinutes: 5)
-            var googledatenotime = GTLRDateTime(date: datefinal!)
-            var googledateend = GTLRDateTime(date: datefinalend!, offsetMinutes: 50)
+            let googledatestart = GTLRDateTime(date: datefinalstart!, offsetMinutes: 5)
+            let googledatenotime = GTLRDateTime(date: datefinal!)
+            let googledateend = GTLRDateTime(date: datefinalend!, offsetMinutes: 50)
             //var offsetMinutes = [TimeZone .localizedName(EST)]
-            var newevent = GTLRCalendar_Event()
+            let newevent = GTLRCalendar_Event()
             newevent.summary = describer
             newevent.descriptionProperty = describer
-            var reminder = GTLRCalendar_EventReminder()
+            let reminder = GTLRCalendar_EventReminder()
             reminder.minutes = 60
             reminder.method = "SMS"
             newevent.reminders = GTLRCalendar_Event_Reminders()
@@ -222,15 +221,12 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             else {
                 newevent.start = GTLRCalendar_EventDateTime()
                 newevent.start?.dateTime = googledatenotime
-                finaldayvalue = ""
-                describer = ""
                 addEvent(newevent)
-
             }
         }
-    }
     
     func AlertGenerator() {
+        //TODO : Add alerts to account for incorrect textual inputs.
         let alert = UIAlertController(title: "Is the below text meant to be a description of an event?", message: tesstext[manualloop], preferredStyle: .alert)
         let alert2 = UIAlertController(title: "Is it correct as is?", message: nil, preferredStyle: .alert)
         let alert3 = UIAlertController(title: "Please enter the description as it was meant to be below.", message: nil, preferredStyle: .alert)
@@ -239,7 +235,9 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         let alert6 = UIAlertController(title: "Is the below text meant to be a day?", message: tesstext[manualloop], preferredStyle: .alert)
         let alert7 = UIAlertController(title: "Please enter the number of day it was meant to be below.", message: nil, preferredStyle: .alert)
         let alert8 = UIAlertController(title: "Is the below text meant to be a time?", message: tesstext[manualloop], preferredStyle: .alert)
-        let alert9 = UIAlertController(title: "Please enter the time it was meant to be below in the format 00:00 - 00:00 in military time format", message: nil, preferredStyle: .alert)
+        let alert9 = UIAlertController(title: "Please enter the time it was meant to be below in the format 00:00 - 00:00 in military time", message: nil, preferredStyle: .alert)
+        let alert10 = UIAlertController(title: "Incorrect format.  Please re-enter.", message: nil, preferredStyle: .alert)
+        var sender = 0
         
         alert.addAction(UIAlertAction(title: "Yes", style: .default, handler: { action in
             alert.present(alert2, animated: true)
@@ -250,7 +248,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         
         alert2.addAction(UIAlertAction(title: "Yes", style: .default, handler: { action in
             self.describer = self.tesstext[self.manualloop]
-            
+            self.NextIterate()
         }))
         alert2.addAction(UIAlertAction(title: "No", style: .default, handler: { action in
             alert2.present(alert3, animated: true)
@@ -260,21 +258,134 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             textField.placeholder = "Input intended description here."
         })
         
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
+        alert3.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
             
-            if let input = alert.textFields?.first?.text {
+            if let input = alert3.textFields?.first?.text {
                 self.describer = input
+                self.NextIterate()
             }
         }))
+        
+        alert4.addAction(UIAlertAction(title: "Yes", style: .default, handler: { action in
+            alert4.present(alert5, animated: true)
+        }))
+        
+        alert4.addAction(UIAlertAction(title: "No", style: .default, handler: { action in
+            alert4.present(alert6, animated: true)
+        }))
+        
+        alert5.addTextField(configurationHandler: { textField in
+            textField.placeholder = "Input intended month numeric value here."
+        })
+        
+        alert5.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
+            
+            if let input = alert5.textFields?.first?.text {
+                if(Int(input) != nil)
+                {
+                self.monthnumber = Int(input)!
+                self.NextIterate()
+            }
+                else
+                {
+                    sender = 5
+                    alert5.present(alert10, animated: true)
+                }
+            }}))
+        
+        alert6.addAction(UIAlertAction(title: "Yes", style: .default, handler: { action in
+            alert6.present(alert7, animated: true)
+        }))
+        
+        alert6.addAction(UIAlertAction(title: "No", style: .default, handler: { action in
+            alert6.present(alert8, animated: true)
+        }))
+        
+        alert7.addTextField(configurationHandler: { textField in
+            textField.placeholder = "Input intended numeric day value here."
+        })
+        
+        alert7.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
+            
+            if let input = alert7.textFields?.first?.text {
+                if(Int(input) != nil)
+                {
+                    self.finaldayvalue = input
+                    self.NextIterate()
+                }
+                else
+                {
+                    sender = 7
+                    alert7.present(alert10, animated: true)
+                }
+            }}))
+        
+        alert8.addAction(UIAlertAction(title: "Yes", style: .default, handler: { action in
+            alert8.present(alert9, animated: true)
+        }))
+        
+        alert8.addAction(UIAlertAction(title: "No", style: .default, handler: { action in
+            if(self.manualloop < 31) {
+            self.manualloop += 1
+            self.GenerateEvent()
+            }
+            else {
+                self.CompletionAlert()
+            }
+        }))
+        
+        alert9.addTextField(configurationHandler: { textField in
+            textField.placeholder = "Input intended time value in 00:00 - 00:00 military format."
+        })
+        
+        alert9.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
+            
+            if let input = alert7.textFields?.first?.text {
+                let inputcheck = self.matches(for: "\\d{1,2}:\\d\\d \\w{0,2} - \\d{1,2}:\\d\\d\\s\\w{0,2}", in: input)
+                if(input == inputcheck[0])
+                {
+                    self.timecontained = 1
+                    self.time[0] = input
+                    self.GenerateEvent()
+                }
+                else
+                {
+                    sender = 9
+                    alert9.present(alert10, animated: true)
+                }
+            }}))
+        
+        
+        
+        
+        
+        alert10.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
+            
+            if(sender == 5) {
+                alert10.present(alert5, animated: true)
+            }
+            else if(sender == 7) {
+                alert10.present(alert7, animated: true)
+            }
+            else if(sender == 9) {
+                alert10.present(alert9, animated: true)
+            }
+        }))
+        
+        
+        
+        
+        
         
         self.present(alert, animated: true)
         }
             
     //Below executes query to API to attempt event insertion.
     func addEvent(_ event: GTLRCalendar_Event) {
+        iterationvalue = 1
         let service = GTLRCalendarService()
-        let selectedCalendar = GTLRCalendar_CalendarListEntry()
-        let calendarID = selectedCalendar.identifier
+        //let selectedCalendar = GTLRCalendar_CalendarListEntry()
+        //let calendarID = selectedCalendar.identifier
         let query = GTLRCalendarQuery_EventsInsert.query(withObject: event, calendarId: "primary")
         query.fields = "id"
         service.executeQuery(
@@ -284,8 +395,14 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
                 _ callbackError: Error?) -> Void in}
                 as? GTLRServiceCompletionHandler
         )
-        ViewController().manualloop += 1
-        ViewController().GenerateEvent()
+        if(manualloop < 31)
+        {
+            NextIterate()
+            GenerateEvent()
+        }
+        else {
+            CompletionAlert()
+        }
     }
     
     
@@ -331,7 +448,15 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     
     
     // Helper for showing an alert
-    */func showAlert(title : String, message: String) {
+    */
+    func CompletionAlert() {
+        let alert = UIAlertController(title : "Event generation completed!  Check your Google Calendar to verify and make corrections.", message: nil, preferredStyle: .alert)
+        let ok = UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil)
+        alert.addAction(ok)
+        present(alert, animated: true, completion: nil)
+    }
+    
+    func showAlert(title : String, message: String) {
         let alert = UIAlertController(
             title: title,
             message: message,
