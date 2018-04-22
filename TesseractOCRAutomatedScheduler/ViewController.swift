@@ -160,7 +160,12 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         else if(monthnumber != 0 && String(finaldayvalue) != "" && describer != "") {
             CreateEvents()
             }
+        else {
+            manualloop += 1
+            GenerateEvent()
+        }
     }
+    
     
     func NextIterate() {
         if(iterationvalue == 1) {
@@ -325,7 +330,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         }))
         
         alert8.addAction(UIAlertAction(title: "No", style: .default, handler: { action in
-            if(self.manualloop < 31) {
+            if(self.manualloop < 34) {
             self.manualloop += 1
             self.GenerateEvent()
             }
@@ -395,7 +400,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
                 _ callbackError: Error?) -> Void in}
                 as? GTLRServiceCompletionHandler
         )
-        if(manualloop < 31)
+        if(manualloop < 34)
         {
             NextIterate()
             GenerateEvent()
@@ -471,7 +476,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         present(alert, animated: true, completion: nil)
     }
     
-    func performImageRecognition(_ image: UIImage) {
+   func performImageRecognition(_ image: UIImage) {
         
         if let tesseract = G8Tesseract(language: "eng") {
             print(tesstext)
@@ -483,16 +488,18 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             var height = [445, 460, 458, 468, 451, 460, 487, 434, 428, 427, 459, 424, 412, 447, 435, 433, 426, 442, 435, 448, 429, 410, 405, 415, 417, 412, 417, 422, 434, 414, 408, 425, 421, 429, 422]
             var width = [434, 549, 555, 549, 558, 565, 582, 455, 543, 542, 548, 550, 562, 581, 478, 526, 537, 535, 541, 549, 567, 487, 523, 534, 528, 537, 546, 559, 513, 527, 529, 517, 524, 535, 557]
             
-            for (index, value) in x.enumerated() {
+            for (index, values) in x.enumerated() {
                 
             tesseract.rect = CGRect(x: x[index], y: y[index], width: width[index], height: height[index])
             tesseract.recognize()
-            tesstext[index] = tesseract.recognizedText
+                tesstext.append(tesseract.recognizedText)
+                print(tesstext[index])
             }
             
 
         }
         print(tesstext)
+        GenerateEvent()
         //activityIndicator.stopAnimating()
     }
     
