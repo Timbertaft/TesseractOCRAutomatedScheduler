@@ -10,7 +10,7 @@ import UIKit
 import TesseractOCR
 import GoogleSignIn
 import GoogleAPIClientForREST
-import CoreFoundation
+import Foundation
 
 
 
@@ -93,6 +93,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     
     
     
+    
     func matches(for regex: String, in text: String) -> [String] {
         
         do {
@@ -110,14 +111,17 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     
     func GenerateEvent()
     {
+        //print(tesstext)
         // TODO: Temporary: remember to move these variable setters out of the function.  Otherwise manual loop will reset to 0 everytime.
         if(timecontained != 1){
         time = matches(for: "\\d{1,2}:\\d\\d \\w{1,2} - \\d{1,2}:\\d\\d\\s\\w{0,2}", in: tesstext[manualloop])
+            //print (tesstext[manualloop])
+            //print(time)
         }
-        var daymatch = matches(for: "\\s\\d{1,2}\\s", in: tesstext[manualloop])
+        var daymatch = matches(for: "^\\d{1,2}\\n", in: tesstext[manualloop])
         var fulltime = [String]()
         
-        if(time[0] != "")
+        if(time.isEmpty == false)
         {
         fulltime = time[0].components(separatedBy: " - ")
         //TODO: start and end times present, but need to be trimmed of extras and have condition inserted to increase value by 12 if pm or am.
@@ -131,30 +135,35 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         
         //Below expression matches array value for day and generates variable in 2 digit numerical format.
         
-        if(daymatch[0] != "") {
+        if(daymatch.isEmpty == false) {
         daymatch[0] = daymatch[0].trimmingCharacters(in: .whitespacesAndNewlines)
-        finaldayvalue = String(format: "%02d", daymatch[0])
+        print(daymatch[0])
+        finaldayvalue = String(format: "%02d", Int(daymatch[0])!)
+            print(finaldayvalue)
         }
-        else if(daymatch[0] == "" && time[0] != "" ) {
-            var daymemory = matches(for: "\\s\\d{1,2}\\s", in: tesstext[manualloop - 1])
+        else if(daymatch.isEmpty == true && time.isEmpty == false ) {
+            var daymemory = matches(for: "^\\d{1,2}\\n", in: tesstext[manualloop - 1])
+            if(daymemory.isEmpty == false) {
             daymatch[0] = String(Int(daymemory[0])! + 1)
             daymatch[0] = daymatch[0].trimmingCharacters(in: .whitespacesAndNewlines)
-            finaldayvalue = String(format: "%02d", daymatch[0])
+            finaldayvalue = String(format: "%02d", Int(daymatch[0])!)
+            }
         }
         // Above expression for day values.
         
         //Below expression for month values
         for(monthdigit, monthname) in month {
             
-            if(tesstext[manualloop] == monthname)
+            if(tesstext[manualloop].range(of: monthname) != nil)
             {
                 monthnumber = monthdigit
                 nameofmonth = monthname
+                
             }
         }
         //TODO: Create logic for identifying description.
         
-        if((monthnumber == 0 || String(finaldayvalue) == "" || describer == "") && tesstext[manualloop] != "" && (tesstext[manualloop] != nameofmonth && tesstext[manualloop] != describer && tesstext[manualloop] != String(finaldayvalue))) {
+        if((monthnumber == 0 || String(finaldayvalue) == "") && tesstext[manualloop].isEmpty == false && (tesstext[manualloop].range(of: nameofmonth) == nil && tesstext[manualloop].range(of: describer) == nil && tesstext[manualloop].range(of: String(finaldayvalue)) == nil)) {
             AlertGenerator()
         }
         else if(monthnumber != 0 && String(finaldayvalue) != "" && describer != "") {
@@ -179,10 +188,17 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         else if(monthnumber != 0 && String(finaldayvalue) != "" && describer != "") {
             CreateEvents()
             }
+        else {
+            manualloop += 1
+            GenerateEvent()
+        }
         }
     
 
         func CreateEvents() {
+            //print(monthnumber)
+            //print(String(finaldayvalue))
+            //print(describer)
             let RFC3339DateFormatter = DateFormatter()
             let RFC3339DateFormatternotime = DateFormatter()
             RFC3339DateFormatter.locale = Locale(identifier: "en_US_POSIX")
@@ -245,10 +261,10 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         var sender = 0
         
         alert.addAction(UIAlertAction(title: "Yes", style: .default, handler: { action in
-            alert.present(alert2, animated: true)
+            self.present(alert2, animated: true)
         }))
             alert.addAction(UIAlertAction(title: "No", style: .default, handler: { action in
-                alert.present(alert4, animated: true)
+                self.present(alert4, animated: true)
             }))
         
         alert2.addAction(UIAlertAction(title: "Yes", style: .default, handler: { action in
@@ -256,7 +272,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             self.NextIterate()
         }))
         alert2.addAction(UIAlertAction(title: "No", style: .default, handler: { action in
-            alert2.present(alert3, animated: true)
+            self.present(alert3, animated: true)
         }))
         
         alert3.addTextField(configurationHandler: { textField in
@@ -272,11 +288,11 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         }))
         
         alert4.addAction(UIAlertAction(title: "Yes", style: .default, handler: { action in
-            alert4.present(alert5, animated: true)
+            self.present(alert5, animated: true)
         }))
         
         alert4.addAction(UIAlertAction(title: "No", style: .default, handler: { action in
-            alert4.present(alert6, animated: true)
+            self.present(alert6, animated: true)
         }))
         
         alert5.addTextField(configurationHandler: { textField in
@@ -294,16 +310,16 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
                 else
                 {
                     sender = 5
-                    alert5.present(alert10, animated: true)
+                    self.present(alert10, animated: true)
                 }
             }}))
         
         alert6.addAction(UIAlertAction(title: "Yes", style: .default, handler: { action in
-            alert6.present(alert7, animated: true)
+            self.present(alert7, animated: true)
         }))
         
         alert6.addAction(UIAlertAction(title: "No", style: .default, handler: { action in
-            alert6.present(alert8, animated: true)
+            self.present(alert8, animated: true)
         }))
         
         alert7.addTextField(configurationHandler: { textField in
@@ -321,12 +337,12 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
                 else
                 {
                     sender = 7
-                    alert7.present(alert10, animated: true)
+                    self.present(alert10, animated: true)
                 }
             }}))
         
         alert8.addAction(UIAlertAction(title: "Yes", style: .default, handler: { action in
-            alert8.present(alert9, animated: true)
+            self.present(alert9, animated: true)
         }))
         
         alert8.addAction(UIAlertAction(title: "No", style: .default, handler: { action in
@@ -356,7 +372,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
                 else
                 {
                     sender = 9
-                    alert9.present(alert10, animated: true)
+                    self.present(alert10, animated: true)
                 }
             }}))
         
@@ -367,13 +383,13 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         alert10.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
             
             if(sender == 5) {
-                alert10.present(alert5, animated: true)
+                self.present(alert5, animated: true)
             }
             else if(sender == 7) {
-                alert10.present(alert7, animated: true)
+                self.present(alert7, animated: true)
             }
             else if(sender == 9) {
-                alert10.present(alert9, animated: true)
+                self.present(alert9, animated: true)
             }
         }))
         
@@ -493,12 +509,12 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             tesseract.rect = CGRect(x: x[index], y: y[index], width: width[index], height: height[index])
             tesseract.recognize()
                 tesstext.append(tesseract.recognizedText)
-                print(tesstext[index])
+                //print(tesstext[index])
             }
             
 
         }
-        print(tesstext)
+        //print(tesstext)
         GenerateEvent()
         //activityIndicator.stopAnimating()
     }
@@ -583,3 +599,5 @@ extension UIImage {
     
     
 }
+
+
