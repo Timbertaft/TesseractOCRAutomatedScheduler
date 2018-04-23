@@ -21,7 +21,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     // resetting the iOS simulator or uninstall the app.
     private let scopes = [kGTLRAuthScopeCalendar]
     
-    private let service = GTLRCalendarService()
+    private let Service = GTLRCalendarService()
     let signInButton = GIDSignInButton()
     var tesstext = [String]()
     
@@ -78,11 +78,11 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
               withError error: Error!) {
         if let error = error {
             showAlert(title: "Authentication Error", message: error.localizedDescription)
-            self.service.authorizer = nil
+            self.Service.authorizer = nil
         } else {
             self.signInButton.isHidden = true
             self.output.isHidden = false
-            self.service.authorizer = user.authentication.fetcherAuthorizer()
+            self.Service.authorizer = user.authentication.fetcherAuthorizer()
             presentImagePicker()
             
             //fetchEvents()
@@ -230,7 +230,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             //print(describer)
             let RFC3339DateFormatter = DateFormatter()
             let RFC3339DateFormatternotime = DateFormatter()
-            //RFC3339DateFormatter.locale = Locale(identifier: "en_US_POSIX")
+            RFC3339DateFormatter.locale = Locale(identifier: "en_US_POSIX")
             RFC3339DateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm"
             RFC3339DateFormatternotime.dateFormat = "yyyy-MM-dd"
             // Above formats values into parsable dates.
@@ -245,12 +245,13 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             let googledatestart = GTLRDateTime(date: datefinalstart!)
             let googledatenotime = GTLRDateTime(date: datefinal!)
             let googledateend = GTLRDateTime(date: datefinalend!)
+            let AnHourFromNow = NSDate(timeIntervalSinceNow: (60*60))
             let newevent = GTLRCalendar_Event()
             newevent.summary = describer
             newevent.descriptionProperty = describer
             let reminder = GTLRCalendar_EventReminder()
             reminder.minutes = 60
-            reminder.method = "SMS"
+            reminder.method = "email"
             newevent.reminders = GTLRCalendar_Event_Reminders()
             newevent.reminders?.overrides = [reminder]
             newevent.reminders?.useDefault = false
@@ -269,7 +270,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             }
             else {
                 newevent.start = GTLRCalendar_EventDateTime()
-                newevent.start?.dateTime = googledatenotime
+                newevent.start?.date = googledatenotime
                 addEvent(newevent)
             }
         }
@@ -432,12 +433,11 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     //Below executes query to API to attempt event insertion.
     func addEvent(_ event: GTLRCalendar_Event) {
         iterationvalue = 1
-        let service = GTLRCalendarService()
         //let selectedCalendar = GTLRCalendar_CalendarListEntry()
         //let calendarID = selectedCalendar.identifier
         let query = GTLRCalendarQuery_EventsInsert.query(withObject: event, calendarId: "primary")
         query.fields = "id"
-        service.executeQuery(
+        Service.executeQuery(
             query,
             completionHandler: {(_ callbackTicket:GTLRServiceTicket,
                 _  event:GTLRCalendar_Event,
