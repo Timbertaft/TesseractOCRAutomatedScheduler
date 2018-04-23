@@ -37,6 +37,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     var iterationvalue = 0
     var time = [String]()
     var timecontained = 0
+    var oddday = 0
     
     //Values for reference and var daymemory = daymatch in creating events Above.
     
@@ -111,9 +112,11 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     
     func GenerateEvent()
     {
-        //print(tesstext)
+        if(tesstext[manualloop] != "") {
+        print(tesstext)
         // TODO: Temporary: remember to move these variable setters out of the function.  Otherwise manual loop will reset to 0 everytime.
         if(timecontained != 1){
+            //print(tesstext[manualloop])
         time = matches(for: "\\d{1,2}:\\d\\d \\w{1,2} - \\d{1,2}:\\d\\d\\s\\w{0,2}", in: tesstext[manualloop])
             //print (tesstext[manualloop])
             //print(time)
@@ -123,10 +126,27 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         
         if(time.isEmpty == false)
         {
-        fulltime = time[0].components(separatedBy: " - ")
+            time[0] = time[0].trimmingCharacters(in: .whitespacesAndNewlines)
+            fulltime = time[0].components(separatedBy: ["-",":"," "])
+            fulltime = fulltime.filter { $0 != ""}
         //TODO: start and end times present, but need to be trimmed of extras and have condition inserted to increase value by 12 if pm or am.
-        starttime = fulltime[0]
-        endtime = fulltime[1]
+        print(fulltime)
+            if(fulltime[2].contains("p") || fulltime[2].contains("P")){
+                if(Int(fulltime[3])! > Int(fulltime[0])!) {
+                    fulltime[3] = String(Int(fulltime[3])! + 12)
+                }
+                fulltime[0] = String(Int(fulltime[0])! + 12)
+            }
+            else if((fulltime[fulltime.count - 1].contains("p") || fulltime[fulltime.count - 1].contains("P")) && Int(fulltime[3])! < 12) {
+                fulltime[3] = String(Int(fulltime[3])! + 12)
+            }
+            else if(!fulltime[2].contains("a") || !fulltime[2].contains("A")) {
+                AlertGenerator()
+            }
+            starttime = String(format: "%02d", Int(fulltime[0])!) + ":" + String(format: "%02d", Int(fulltime[1])!)
+            endtime = String(format: "%02d", Int(fulltime[3])!) + ":" + String(format: "%02d", Int(fulltime[4])!)
+            print(starttime)
+            print(endtime)
             describer = time[0]
         }
         //Below account for common character matching issues
@@ -142,11 +162,14 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             print(finaldayvalue)
         }
         else if(daymatch.isEmpty == true && time.isEmpty == false ) {
-            var daymemory = matches(for: "^\\d{1,2}\\n", in: tesstext[manualloop - 1])
+             oddday = 1
+             var daymemory = matches(for: "^\\d{1,2}\\n", in: tesstext[manualloop - 1])
             if(daymemory.isEmpty == false) {
-            daymatch[0] = String(Int(daymemory[0])! + 1)
-            daymatch[0] = daymatch[0].trimmingCharacters(in: .whitespacesAndNewlines)
+            print(daymemory[0])
+            daymemory[0] = daymemory[0].trimmingCharacters(in: .whitespacesAndNewlines)
+            daymatch.append(String(Int(daymemory[0])! + 1))
             finaldayvalue = String(format: "%02d", Int(daymatch[0])!)
+            print(finaldayvalue)
             }
         }
         // Above expression for day values.
@@ -163,7 +186,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         }
         //TODO: Create logic for identifying description.
         
-        if((monthnumber == 0 || String(finaldayvalue) == "") && tesstext[manualloop].isEmpty == false && (tesstext[manualloop].range(of: nameofmonth) == nil && tesstext[manualloop].range(of: describer) == nil && tesstext[manualloop].range(of: String(finaldayvalue)) == nil)) {
+        if((monthnumber == 0 || String(finaldayvalue) == "") && tesstext[manualloop].isEmpty == false && (tesstext[manualloop].range(of: nameofmonth) == nil && tesstext[manualloop].range(of: describer) == nil && tesstext[manualloop].range(of: String(finaldayvalue)) == nil) && oddday != 1) {
             AlertGenerator()
         }
         else if(monthnumber != 0 && String(finaldayvalue) != "" && describer != "") {
@@ -173,11 +196,14 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             manualloop += 1
             GenerateEvent()
         }
+        } else {
+            NextIterate()
+        }
     }
     
     
     func NextIterate() {
-        if(iterationvalue == 1) {
+        if(iterationvalue == 1 && self.manualloop < 34) {
         manualloop += 1
         starttime = ""
         endtime = ""
@@ -185,12 +211,15 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         describer = ""
         iterationvalue = 0
         }
-        else if(monthnumber != 0 && String(finaldayvalue) != "" && describer != "") {
+        else if(monthnumber != 0 && String(finaldayvalue) != "" && describer != "" && self.manualloop < 34) {
             CreateEvents()
             }
-        else {
+        else if(self.manualloop < 34) {
             manualloop += 1
             GenerateEvent()
+            }
+        else {
+            CompletionAlert()
         }
         }
     
@@ -201,22 +230,21 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             //print(describer)
             let RFC3339DateFormatter = DateFormatter()
             let RFC3339DateFormatternotime = DateFormatter()
-            RFC3339DateFormatter.locale = Locale(identifier: "en_US_POSIX")
+            //RFC3339DateFormatter.locale = Locale(identifier: "en_US_POSIX")
             RFC3339DateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm"
             RFC3339DateFormatternotime.dateFormat = "yyyy-MM-dd"
             // Above formats values into parsable dates.
             //Below variables for time and dates parsable by calendar.
-            let date = "2018-" + String(monthnumber) + "-" + String(finaldayvalue)
+            let date = "2018-" + String(format: "%02d", monthnumber) + "-" + String(finaldayvalue)
             let datetimestart = (date + "T" + starttime)
             let dattimeend = (date + "T" + endtime)
             let datefinalstart = RFC3339DateFormatter.date(from: datetimestart)
             let datefinal = RFC3339DateFormatternotime.date(from: date)
             let datefinalend = RFC3339DateFormatter.date(from: dattimeend)
             //TODO: Learn what offset minutes represents
-            let googledatestart = GTLRDateTime(date: datefinalstart!, offsetMinutes: 5)
+            let googledatestart = GTLRDateTime(date: datefinalstart!)
             let googledatenotime = GTLRDateTime(date: datefinal!)
-            let googledateend = GTLRDateTime(date: datefinalend!, offsetMinutes: 50)
-            //var offsetMinutes = [TimeZone .localizedName(EST)]
+            let googledateend = GTLRDateTime(date: datefinalend!)
             let newevent = GTLRCalendar_Event()
             newevent.summary = describer
             newevent.descriptionProperty = describer
@@ -361,12 +389,12 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         
         alert9.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
             
-            if let input = alert7.textFields?.first?.text {
+            if let input = alert9.textFields!.first?.text {
                 let inputcheck = self.matches(for: "\\d{1,2}:\\d\\d \\w{0,2} - \\d{1,2}:\\d\\d\\s\\w{0,2}", in: input)
                 if(input == inputcheck[0])
                 {
                     self.timecontained = 1
-                    self.time[0] = input
+                    self.time.append(inputcheck[0])
                     self.GenerateEvent()
                 }
                 else
