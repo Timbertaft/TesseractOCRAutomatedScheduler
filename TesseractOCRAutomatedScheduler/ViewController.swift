@@ -131,7 +131,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             fulltime = time[0].components(separatedBy: ["-",":"," "])
             fulltime = fulltime.filter { $0 != ""}
         //TODO: start and end times present, but need to be trimmed of extras and have condition inserted to increase value by 12 if pm or am.
-        print(fulltime)
+        //print(fulltime)
             if(fulltime[2].contains("p") || fulltime[2].contains("P")){
                 if(Int(fulltime[3])! > Int(fulltime[0])!) {
                     fulltime[3] = String(Int(fulltime[3])! + 12)
@@ -144,10 +144,17 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             else if(!fulltime[2].contains("a") || !fulltime[2].contains("A")) {
                 AlertGenerator()
             }
+            if((fulltime[2].contains("A") || fulltime[2].contains("a")) && fulltime[0].contains("12")) {
+                fulltime[0] = String(Int(fulltime[0])! - 12)
+            }
+            if((fulltime[fulltime.count - 1].contains("A") || fulltime[fulltime.count - 1].contains("a")) && fulltime[3].contains("12")) {
+                fulltime[3] = String(Int(fulltime[3])! - 12)
+            }
             starttime = String(format: "%02d", Int(fulltime[0])!) + ":" + String(format: "%02d", Int(fulltime[1])!)
             endtime = String(format: "%02d", Int(fulltime[3])!) + ":" + String(format: "%02d", Int(fulltime[4])!)
-            print(describer)
+            //print(describer)
         }
+            
         //Below account for common character matching issues
         
         //TODO: Create character error catching
@@ -168,7 +175,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             daymemory[0] = daymemory[0].trimmingCharacters(in: .whitespacesAndNewlines)
             daymatch.append(String(Int(daymemory[0])! + 1))
             finaldayvalue = String(format: "%02d", Int(daymatch[0])!)
-            print(finaldayvalue)
+            //print(finaldayvalue)
             }
         }
         // Above expression for day values.
@@ -238,8 +245,11 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             let datetimestart = (date + "T" + starttime)
             let dattimeend = (date + "T" + endtime)
             let datefinalstart = RFC3339DateFormatter.date(from: datetimestart)
+            print(RFC3339DateFormatter.string(from: datefinalstart!))
             let datefinal = RFC3339DateFormatternotime.date(from: date)
+            print(RFC3339DateFormatter.string(from: datefinal!))
             let datefinalend = RFC3339DateFormatter.date(from: dattimeend)
+            print(RFC3339DateFormatter.string(from: datefinalend!))
             //TODO: Learn what offset minutes represents
             let googledatestart = GTLRDateTime(date: datefinalstart!)
             let googledatenotime = GTLRDateTime(date: datefinal!)
