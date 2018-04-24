@@ -112,8 +112,8 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     
     func GenerateEvent()
     {
+        //print(tesstext)
         if(tesstext[manualloop] != "") {
-        print(tesstext)
         // TODO: Temporary: remember to move these variable setters out of the function.  Otherwise manual loop will reset to 0 everytime.
         if(timecontained != 1){
             //print(tesstext[manualloop])
@@ -126,6 +126,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         
         if(time.isEmpty == false)
         {
+            describer = time[0]
             time[0] = time[0].trimmingCharacters(in: .whitespacesAndNewlines)
             fulltime = time[0].components(separatedBy: ["-",":"," "])
             fulltime = fulltime.filter { $0 != ""}
@@ -145,9 +146,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             }
             starttime = String(format: "%02d", Int(fulltime[0])!) + ":" + String(format: "%02d", Int(fulltime[1])!)
             endtime = String(format: "%02d", Int(fulltime[3])!) + ":" + String(format: "%02d", Int(fulltime[4])!)
-            print(starttime)
-            print(endtime)
-            describer = time[0]
+            print(describer)
         }
         //Below account for common character matching issues
         
@@ -186,7 +185,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         }
         //TODO: Create logic for identifying description.
         
-        if((monthnumber == 0 || String(finaldayvalue) == "") && tesstext[manualloop].isEmpty == false && (tesstext[manualloop].range(of: nameofmonth) == nil && tesstext[manualloop].range(of: describer) == nil && tesstext[manualloop].range(of: String(finaldayvalue)) == nil) && oddday != 1) {
+        if((monthnumber == 0 || String(finaldayvalue) == "" || time.isEmpty == true) && tesstext[manualloop].isEmpty == false && (tesstext[manualloop].range(of: nameofmonth) == nil && tesstext[manualloop].range(of: describer) == nil && tesstext[manualloop].range(of: String(finaldayvalue)) == nil) && oddday != 1) {
             AlertGenerator()
         }
         else if(monthnumber != 0 && String(finaldayvalue) != "" && describer != "") {
@@ -245,7 +244,6 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             let googledatestart = GTLRDateTime(date: datefinalstart!)
             let googledatenotime = GTLRDateTime(date: datefinal!)
             let googledateend = GTLRDateTime(date: datefinalend!)
-            let AnHourFromNow = NSDate(timeIntervalSinceNow: (60*60))
             let newevent = GTLRCalendar_Event()
             newevent.summary = describer
             newevent.descriptionProperty = describer
@@ -444,6 +442,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
                 _ callbackError: Error?) -> Void in}
                 as? GTLRServiceCompletionHandler
         )
+        
         if(manualloop < 34)
         {
             NextIterate()
@@ -500,7 +499,11 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     */
     func CompletionAlert() {
         let alert = UIAlertController(title : "Event generation completed!  Check your Google Calendar to verify and make corrections.", message: nil, preferredStyle: .alert)
-        let ok = UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil)
+        let ok = UIAlertAction(title: "OK", style: .default, handler: { action in
+            self.handleLogout()
+            self.signInButton.isHidden = false
+            self.output.isHidden = true
+        })
         alert.addAction(ok)
         present(alert, animated: true, completion: nil)
     }

@@ -17,7 +17,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func applicationDidFinishLaunching(_ application: UIApplication) {
         // Initialize Google sign-in.
-        GIDSignIn.sharedInstance().clientID = "937626467274-rtq1i1535b711ko1fdmbcrr75hiqsfi5.apps.googleusercontent.com"
+        GIDSignIn.sharedInstance().clientID = "937626467274-1757gns5l0grv671tvn88vr2g8isaa3u.apps.googleusercontent.com"
     }
     
     func application(_ application: UIApplication,
