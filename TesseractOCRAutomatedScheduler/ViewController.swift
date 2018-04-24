@@ -38,6 +38,10 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     var time = [String]()
     var timecontained = 0
     var oddday = 0
+    var eventgenerationchecker = 0
+    var tesstextcheck = ""
+    var dayiterate = 0
+    var daymemory = 0
     
     //Values for reference and var daymemory = daymatch in creating events Above.
     
@@ -113,25 +117,44 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     func GenerateEvent()
     {
         //print(tesstext)
-        if(tesstext[manualloop] != "") {
+        tesstextcheck = tesstext[manualloop]
+        
+        //if(tesstextcheck.isEmpty == false) {
         // TODO: Temporary: remember to move these variable setters out of the function.  Otherwise manual loop will reset to 0 everytime.
         if(timecontained != 1){
             //print(tesstext[manualloop])
         time = matches(for: "\\d{1,2}:\\d\\d \\w{1,2} - \\d{1,2}:\\d\\d\\s\\w{0,2}", in: tesstext[manualloop])
             //print (tesstext[manualloop])
             //print(time)
+        } else {
+            print(time[0])
+            
         }
         var daymatch = matches(for: "^\\d{1,2}\\n", in: tesstext[manualloop])
         var fulltime = [String]()
         
+        for(monthdigit, monthname) in month {
+            
+            if(tesstext[manualloop].range(of: monthname) != nil)
+            {
+                monthnumber = monthdigit
+                nameofmonth = monthname
+                
+            }
+        }
+        let range1 = tesstext[manualloop].range(of: nameofmonth)
         if(time.isEmpty == false)
         {
-            describer = time[0]
+            if(timecontained == 1){
+                print(time[0])
+            }
+            print(time[0] + " time isn't empty.")
             time[0] = time[0].trimmingCharacters(in: .whitespacesAndNewlines)
+            describer = time[0]
             fulltime = time[0].components(separatedBy: ["-",":"," "])
             fulltime = fulltime.filter { $0 != ""}
         //TODO: start and end times present, but need to be trimmed of extras and have condition inserted to increase value by 12 if pm or am.
-        //print(fulltime)
+        print(fulltime)
             if(fulltime[2].contains("p") || fulltime[2].contains("P")){
                 if(Int(fulltime[3])! > Int(fulltime[0])!) {
                     fulltime[3] = String(Int(fulltime[3])! + 12)
@@ -161,49 +184,71 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         
         //Below expression matches array value for day and generates variable in 2 digit numerical format.
         
-        if(daymatch.isEmpty == false) {
+        if(!daymatch.isEmpty) {
+            dayiterate += 1
         daymatch[0] = daymatch[0].trimmingCharacters(in: .whitespacesAndNewlines)
-        print(daymatch[0])
+        print(daymatch[0] + " day isn't empty")
         finaldayvalue = String(format: "%02d", Int(daymatch[0])!)
+            daymemory = Int(daymatch[0])!
             print(finaldayvalue)
+        } else if(range1 != nil) {
+            dayiterate += 1
+            AlertGenerator()
         }
-        else if(daymatch.isEmpty == true && time.isEmpty == false ) {
+        else if(daymatch.isEmpty && !time.isEmpty) {
              oddday = 1
-             var daymemory = matches(for: "^\\d{1,2}\\n", in: tesstext[manualloop - 1])
-            if(daymemory.isEmpty == false) {
-            print(daymemory[0])
-            daymemory[0] = daymemory[0].trimmingCharacters(in: .whitespacesAndNewlines)
-            daymatch.append(String(Int(daymemory[0])! + 1))
+            if(daymemory != 0) {
+            print(String(daymemory) + " daymemory is active")
+                daymatch.insert(String(daymemory + (manualloop - dayiterate)), at: 0)
             finaldayvalue = String(format: "%02d", Int(daymatch[0])!)
+            dayiterate += 1
             //print(finaldayvalue)
             }
         }
         // Above expression for day values.
         
         //Below expression for month values
-        for(monthdigit, monthname) in month {
-            
-            if(tesstext[manualloop].range(of: monthname) != nil)
-            {
-                monthnumber = monthdigit
-                nameofmonth = monthname
-                
-            }
-        }
-        //TODO: Create logic for identifying description.
         
-        if((monthnumber == 0 || String(finaldayvalue) == "" || time.isEmpty == true) && tesstext[manualloop].isEmpty == false && (tesstext[manualloop].range(of: nameofmonth) == nil && tesstext[manualloop].range(of: describer) == nil && tesstext[manualloop].range(of: String(finaldayvalue)) == nil) && oddday != 1) {
+        print(nameofmonth + " " + String(monthnumber) + " month isn't empty")
+        //TODO: Create logic for identifying description.
+            let range2 = tesstext[manualloop].range(of: describer)
+            let range3 = tesstext[manualloop].range(of: String(finaldayvalue))
+            tesstextcheck = tesstextcheck.replacingOccurrences(of: "^\\d{1,2}\\n", with: "", options: .regularExpression)
+            tesstextcheck = tesstextcheck.trimmingCharacters(in: .whitespacesAndNewlines)
+            print(tesstextcheck)
+            if (range1 != nil) {
+            print(nameofmonth + " yup")
+            }
+            else {
+                print("month was nil")
+            }
+            if (range2 != nil) {
+                print(describer + " yup")
+            }
+            else {
+                print("describer was nil")
+            }
+            if (range3 != nil)
+            {
+            print(String(finaldayvalue + " yup"))
+            }
+            else {
+                print("day was nil")
+            }
+        //if((monthnumber == 0 || finaldayvalue.isEmpty == true || time.isEmpty == true) && tesstext[manualloop].isEmpty == false && ((tesstext[manualloop].range(of: nameofmonth) == nil && tesstext[manualloop].range(of: describer) != nil && tesstext[manualloop].range(of: String(finaldayvalue)) != nil) || (tesstext[manualloop].range(of: describer) == nil && tesstext[manualloop].range(of: nameofmonth) != nil && tesstext[manualloop].range(of: String(finaldayvalue)) != nil) || (tesstext[manualloop].range(of: String(finaldayvalue)) == nil && tesstext[manualloop].range(of: describer) != nil && tesstext[manualloop].range(of: nameofmonth) != nil)) && oddday != 1)
+        
+        if((((monthnumber == 0 || finaldayvalue.isEmpty || time.isEmpty) && !tesstext[manualloop].isEmpty && (range1 == nil && ((range3 == nil || (range2 == nil && !tesstextcheck.isEmpty))) || (!finaldayvalue.isEmpty && Int(finaldayvalue)! > 31)) && oddday != 1)) || (range1 == nil && range2 == nil && range3 == nil) && oddday != 1) {
             AlertGenerator()
         }
-        else if(monthnumber != 0 && String(finaldayvalue) != "" && describer != "") {
+        else if(monthnumber > 0 && !finaldayvalue.isEmpty && !starttime.isEmpty && !endtime.isEmpty) {
             CreateEvents()
             }
-        else {
+        else if(manualloop < 34){
             manualloop += 1
             GenerateEvent()
         }
-        } else {
-            NextIterate()
+            else {
+                CompletionAlert()
         }
     }
     
@@ -216,6 +261,8 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         finaldayvalue = ""
         describer = ""
         iterationvalue = 0
+        timecontained = 0
+        oddday = 0
         }
         else if(monthnumber != 0 && String(finaldayvalue) != "" && describer != "" && self.manualloop < 34) {
             CreateEvents()
@@ -224,16 +271,22 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             manualloop += 1
             GenerateEvent()
             }
-        else {
+        else if(self.manualloop > 34 && eventgenerationchecker == 0) {
+            FailureAlert()
+        }
+        else
+        {
             CompletionAlert()
         }
         }
     
 
         func CreateEvents() {
-            //print(monthnumber)
-            //print(String(finaldayvalue))
-            //print(describer)
+            eventgenerationchecker += 1
+            print(monthnumber)
+            print(String(finaldayvalue))
+            print(describer)
+            
             let RFC3339DateFormatter = DateFormatter()
             let RFC3339DateFormatternotime = DateFormatter()
             RFC3339DateFormatter.locale = Locale(identifier: "en_US_POSIX")
@@ -245,11 +298,11 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             let datetimestart = (date + "T" + starttime)
             let dattimeend = (date + "T" + endtime)
             let datefinalstart = RFC3339DateFormatter.date(from: datetimestart)
-            print(RFC3339DateFormatter.string(from: datefinalstart!))
+            //print(RFC3339DateFormatter.string(from: datefinalstart!))
             let datefinal = RFC3339DateFormatternotime.date(from: date)
-            print(RFC3339DateFormatter.string(from: datefinal!))
+            //print(RFC3339DateFormatter.string(from: datefinal!))
             let datefinalend = RFC3339DateFormatter.date(from: dattimeend)
-            print(RFC3339DateFormatter.string(from: datefinalend!))
+            //print(RFC3339DateFormatter.string(from: datefinalend!))
             //TODO: Learn what offset minutes represents
             let googledatestart = GTLRDateTime(date: datefinalstart!)
             let googledatenotime = GTLRDateTime(date: datefinal!)
@@ -293,23 +346,28 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         let alert6 = UIAlertController(title: "Is the below text meant to be a day?", message: tesstext[manualloop], preferredStyle: .alert)
         let alert7 = UIAlertController(title: "Please enter the number of day it was meant to be below.", message: nil, preferredStyle: .alert)
         let alert8 = UIAlertController(title: "Is the below text meant to be a time?", message: tesstext[manualloop], preferredStyle: .alert)
-        let alert9 = UIAlertController(title: "Please enter the time it was meant to be below in the format 00:00 - 00:00 in military time", message: nil, preferredStyle: .alert)
+        let alert9 = UIAlertController(title: "Input intended time value in as 00:00 AM/PM - 00:00 AM/PM.", message: tesstext[manualloop], preferredStyle: .alert)
         let alert10 = UIAlertController(title: "Incorrect format.  Please re-enter.", message: nil, preferredStyle: .alert)
         var sender = 0
         
         alert.addAction(UIAlertAction(title: "Yes", style: .default, handler: { action in
-            self.present(alert2, animated: true)
+            self.topMostController().dismiss(animated: true, completion: nil)
+            self.topMostController().present(alert2, animated: true)
         }))
             alert.addAction(UIAlertAction(title: "No", style: .default, handler: { action in
-                self.present(alert4, animated: true)
+                self.topMostController().dismiss(animated: true, completion: nil)
+                self.topMostController().present(alert4, animated: true)
             }))
         
         alert2.addAction(UIAlertAction(title: "Yes", style: .default, handler: { action in
             self.describer = self.tesstext[self.manualloop]
             self.NextIterate()
+            self.topMostController().dismiss(animated: true, completion: nil)
+            
         }))
         alert2.addAction(UIAlertAction(title: "No", style: .default, handler: { action in
-            self.present(alert3, animated: true)
+            self.topMostController().dismiss(animated: true, completion: nil)
+            self.topMostController().present(alert3, animated: true)
         }))
         
         alert3.addTextField(configurationHandler: { textField in
@@ -321,15 +379,18 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             if let input = alert3.textFields?.first?.text {
                 self.describer = input
                 self.NextIterate()
+                self.topMostController().dismiss(animated: true, completion: nil)
             }
         }))
         
         alert4.addAction(UIAlertAction(title: "Yes", style: .default, handler: { action in
-            self.present(alert5, animated: true)
+            self.topMostController().dismiss(animated: true, completion: nil)
+            self.topMostController().present(alert5, animated: true)
         }))
         
         alert4.addAction(UIAlertAction(title: "No", style: .default, handler: { action in
-            self.present(alert6, animated: true)
+            self.topMostController().dismiss(animated: true, completion: nil)
+            self.topMostController().present(alert6, animated: true)
         }))
         
         alert5.addTextField(configurationHandler: { textField in
@@ -347,16 +408,19 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
                 else
                 {
                     sender = 5
-                    self.present(alert10, animated: true)
+                    self.topMostController().dismiss(animated: true, completion: nil)
+                    self.topMostController().present(alert10, animated: true)
                 }
             }}))
         
         alert6.addAction(UIAlertAction(title: "Yes", style: .default, handler: { action in
-            self.present(alert7, animated: true)
+            self.topMostController().dismiss(animated: true, completion: nil)
+            self.topMostController().present(alert7, animated: true)
         }))
         
         alert6.addAction(UIAlertAction(title: "No", style: .default, handler: { action in
-            self.present(alert8, animated: true)
+            self.topMostController().dismiss(animated: true, completion: nil)
+            self.topMostController().present(alert8, animated: true)
         }))
         
         alert7.addTextField(configurationHandler: { textField in
@@ -369,47 +433,55 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
                 if(Int(input) != nil)
                 {
                     self.finaldayvalue = input
+                    self.daymemory = Int(input)!
                     self.NextIterate()
                 }
                 else
                 {
                     sender = 7
-                    self.present(alert10, animated: true)
+                    self.topMostController().dismiss(animated: true, completion: nil)
+                    self.topMostController().present(alert10, animated: true)
                 }
             }}))
         
         alert8.addAction(UIAlertAction(title: "Yes", style: .default, handler: { action in
-            self.present(alert9, animated: true)
+            self.topMostController().dismiss(animated: true, completion: nil)
+            self.topMostController().present(alert9, animated: true)
         }))
         
         alert8.addAction(UIAlertAction(title: "No", style: .default, handler: { action in
             if(self.manualloop < 34) {
             self.manualloop += 1
+            self.topMostController().dismiss(animated: true, completion: nil)
             self.GenerateEvent()
+            
             }
             else {
+                self.topMostController().dismiss(animated: true, completion: nil)
                 self.CompletionAlert()
             }
         }))
         
         alert9.addTextField(configurationHandler: { textField in
-            textField.placeholder = "Input intended time value in 00:00 - 00:00 military format."
+            textField.placeholder = "Input intended time value in 00:00 AM/PM - 00:00 AM/PM."
         })
         
         alert9.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
             
             if let input = alert9.textFields!.first?.text {
                 let inputcheck = self.matches(for: "\\d{1,2}:\\d\\d \\w{0,2} - \\d{1,2}:\\d\\d\\s\\w{0,2}", in: input)
-                if(input == inputcheck[0])
+                if(!inputcheck[0].isEmpty)
                 {
                     self.timecontained = 1
                     self.time.append(inputcheck[0])
                     self.GenerateEvent()
+                    self.topMostController().dismiss(animated: true, completion: nil)
                 }
                 else
                 {
                     sender = 9
-                    self.present(alert10, animated: true)
+                    self.topMostController().dismiss(animated: true, completion: nil)
+                    self.topMostController().present(alert10, animated: true)
                 }
             }}))
         
@@ -420,13 +492,16 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         alert10.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
             
             if(sender == 5) {
-                self.present(alert5, animated: true)
+                self.topMostController().dismiss(animated: true, completion: nil)
+                self.topMostController().present(alert5, animated: true)
             }
             else if(sender == 7) {
-                self.present(alert7, animated: true)
+                self.topMostController().dismiss(animated: true, completion: nil)
+                self.topMostController().present(alert7, animated: true)
             }
             else if(sender == 9) {
-                self.present(alert9, animated: true)
+                self.topMostController().dismiss(animated: true, completion: nil)
+                self.topMostController().present(alert9, animated: true)
             }
         }))
         
@@ -434,9 +509,18 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         
         
         
-        
-        self.present(alert, animated: true)
+        self.topMostController().dismiss(animated: true, completion: nil)
+        self.topMostController().present(alert, animated: true)
         }
+    
+    //Below correct view presentation errors.
+    func topMostController() -> UIViewController {
+        var topController: UIViewController = UIApplication.shared.keyWindow!.rootViewController!
+        while (topController.presentedViewController != nil) {
+            topController = topController.presentedViewController!
+        }
+        return topController
+    }
             
     //Below executes query to API to attempt event insertion.
     func addEvent(_ event: GTLRCalendar_Event) {
@@ -518,6 +602,17 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         present(alert, animated: true, completion: nil)
     }
     
+    func FailureAlert() {
+        let alert = UIAlertController(title : "Unable to detect calendar events.  No events generated.", message: nil, preferredStyle: .alert)
+        let ok = UIAlertAction(title: "OK", style: .default, handler: { action in
+            self.handleLogout()
+            self.signInButton.isHidden = false
+            self.output.isHidden = true
+        })
+        alert.addAction(ok)
+        present(alert, animated: true, completion: nil)
+    }
+    
     func showAlert(title : String, message: String) {
         let alert = UIAlertController(
             title: title,
@@ -536,7 +631,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
    func performImageRecognition(_ image: UIImage) {
         
         if let tesseract = G8Tesseract(language: "eng") {
-            print(tesstext)
+            //print(tesstext)
             tesseract.engineMode = .tesseractCubeCombined
             tesseract.pageSegmentationMode = .singleColumn
             tesseract.image = image.g8_blackAndWhite()
