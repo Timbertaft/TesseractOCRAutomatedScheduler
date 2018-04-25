@@ -2,15 +2,23 @@
 //  AppDelegate.swift
 //  TesseractOCRAutomatedScheduler
 //
-//  Created by Mike Posse on 4/15/18.
-//  Copyright © 2018 Mike Posse. All rights reserved.
+//  Created by Mihai Pocse on 4/15/18.
+//  Copyright © 2018 Mihai Pocse. All rights reserved.
 //
+
+/* In order to have full functionality, URL Type of Reverse Client ID from Google.plist has been set.  Additionally, Bitcode has been disabled on all frameworks and classes.  Frameworks were added under the project settings for Tesseract and GoogleAPIClinetForRest (Google Calendar), and project targets are set to use the C++ decompiler to avoid errors when attempting to use Tesseract.  Plist has authorization settings for camera and photo picker.  App icon set for functionality with Iphones, Ipads, and the Apple App Store. */
+
+//Importing CocoaPod dependencies
 
 import UIKit
 import GoogleSignIn
 import GoogleAPIClientForREST
 
+
 @UIApplicationMain
+
+/* All code in AppDelegate class exists for providing Google Sign-In with necessary clientIDs and keys for authorizing access to the Google platform and related applications. */
+
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
     var window: UIWindow?
