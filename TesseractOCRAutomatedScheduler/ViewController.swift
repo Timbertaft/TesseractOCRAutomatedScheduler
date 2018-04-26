@@ -49,6 +49,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     var dayiterate = 0
     var daymemory = 0
     var yearnumber = 0
+    var blankcheck = 0
     
     // Below snippet does not work in current version.  Meant to show loading icon when // Tesseract processing takes longer than expected to generate.
     
@@ -207,6 +208,15 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
     {
         //print(tesstext)
         tesstextcheck = tesstext[manualloop]
+        if(tesstext[manualloop].isEmpty) {
+                blankcheck += 1
+            print(blankcheck)
+            if(blankcheck == 34) {
+                FailureAlert()
+            } else {
+                NextIterate()
+            }
+        }
         
         /* Below contains an if statement check to verify that there isn’t a time value from the user already stored.  If not, then time variable will != nil in the event that there is a match for a time entry from the tesstext line at array value of manualloop. */
         
@@ -236,7 +246,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         }
         /* The first of three ranges used to assess alert status for values.  If these ranges are nil, it represents a problem with the inputted string requiring user intervention. */
         let range1 = tesstext[manualloop].range(of: nameofmonth)
-        if(time.isEmpty == false)
+        if(time.isEmpty == false && time.count > 0)
         {
             if(timecontained == 1){
                 print(time[0])
@@ -259,7 +269,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
             else if((fulltime[fulltime.count - 1].contains("p") || fulltime[fulltime.count - 1].contains("P")) && Int(fulltime[3])! < 12) {
                 fulltime[3] = String(Int(fulltime[3])! + 12)
             }
-            else if(!fulltime[2].contains("a") || !fulltime[2].contains("A")) {
+            else if(fulltime[2].contains("a") == false && fulltime[2].contains("A") == false) {
                 AlertGenerator()
             }
             if((fulltime[2].contains("A") || fulltime[2].contains("a")) && fulltime[0].contains("12")) {
@@ -275,14 +285,14 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
         
         /* Below expression matches array value for day and generates variable in 2 digit numerical format.  Dayiterate and daymemory are used as fill-in values in the event that the parser is unable to locate a day within the tesstext array index location. */
         
-        if(!daymatch.isEmpty) {
+        if(daymatch.isEmpty == false) {
             dayiterate += 1
             daymatch[0] = daymatch[0].trimmingCharacters(in: .whitespacesAndNewlines)
             print(daymatch[0] + " day isn't empty")
             finaldayvalue = String(format: "%02d", Int(daymatch[0])!)
             daymemory = Int(daymatch[0])!
             print(finaldayvalue)
-        } else if(range1 != nil) {
+        } else if(range1?.isEmpty == true) {
             dayiterate += 1
             AlertGenerator()
         }
@@ -403,6 +413,7 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
  let datefinalend = RFC3339DateFormatter.date(from: dattimeend)
  //print(RFC3339DateFormatter.string(from: datefinalend!))
  //TODO: Learn what offset minutes represents
+ 
  let googledatestart = GTLRDateTime(date: datefinalstart!)
  let googledatenotime = GTLRDateTime(date: datefinal!)
  let googledateend = GTLRDateTime(date: datefinalend!)
@@ -657,8 +668,9 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
  self.topMostController().dismiss(animated: true, completion: nil)
  self.topMostController().present(alert7, animated: true)
  } else {
- self.GenerateEvent()
  self.topMostController().dismiss(animated: true, completion: nil)
+ self.GenerateEvent()
+ 
  }
  }
  } else
@@ -741,15 +753,15 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
  
  //Notifies user that tesstext index has reached its conclusion and all events //are now generated.  Clicking OK performs Google Sign-Out.
  func CompletionAlert() {
- let alert = UIAlertController(title : "Event generation completed!  Check your Google Calendar to verify and make corrections.", message: nil, preferredStyle: .alert)
+ let alertist = UIAlertController(title : "Event generation completed!  Check your Google Calendar to verify and make corrections.", message: nil, preferredStyle: .alert)
  let ok = UIAlertAction(title: "OK", style: .default, handler: { action in
  self.handleLogout()
  self.signInButton.isHidden = false
  self.output.isHidden = true
  self.topMostController().dismiss(animated: true, completion: nil)
  })
- alert.addAction(ok)
- self.topMostController().present(alert, animated: true, completion: nil)
+ alertist.addAction(ok)
+ self.topMostController().present(alertist, animated: true, completion: nil)
  }
  
  //Below notifies user if there were no detectable entries to parse for the calendar //in tesstext.
@@ -851,7 +863,8 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
  let imagePicker = UIImagePickerController()
  imagePicker.delegate = self
  imagePicker.sourceType = .photoLibrary
- self.present(imagePicker, animated: true)
+ self.topMostController().dismiss(animated: true, completion: nil)
+ self.topMostController().present(imagePicker, animated: true)
  }
  imagePickerActionSheet.addAction(libraryButton)
  // 2
@@ -861,7 +874,8 @@ class ViewController: UIViewController, GIDSignInDelegate, GIDSignInUIDelegate {
  })
  imagePickerActionSheet.addAction(cancelButton)
  // 3
- present(imagePickerActionSheet, animated: true)
+self.topMostController().dismiss(animated: true, completion: nil)
+ self.topMostController().present(imagePickerActionSheet, animated: true)
  }
  // 1
  func imagePickerController(_ picker: UIImagePickerController,
